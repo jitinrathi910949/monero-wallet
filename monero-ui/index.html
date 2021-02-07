@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+
+  <link
+    href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+    rel="stylesheet">
+  <link href="monero.css" rel="stylesheet">
+
+  <!-- Toast message -->
+  <link rel="stylesheet" type="text/css"
+    href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+
+  <script type="text/javascript" charset="utf8"
+    src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+
+
+  <!-- Data table -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+  <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js">
+  </script>
+
+  <title>Monero Wallet Manager</title>
+</head>
+
+<body>
+
+  <!-- Modal -->
+  <div class="modal fade" id="createNewModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Generate New Wallet</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="createNewWallet">
+          <div class="modal-body">
+            Enter new wallet ID:
+            <input type="text" id="newWalletId" class="form-control" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <input type="submit" class="btn btn-primary" value="Generate" />
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Wrapper -->
+  <div id="wrapper">
+
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+      <!-- Sidebar - Brand -->
+      <a class="sidebar-brand d-flex align-items-center justify-content-center">
+        <div class="sidebar-brand-icon rotate-n-15">
+        </div>
+        <div class="sidebar-brand-text mx-3">Monero UI </div>
+      </a>
+
+      <!-- Divider -->
+      <hr class="sidebar-divider my-0">
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-toggle="modal" data-target="#createNewModal">
+          <span class="btn btn-info">
+            Create new Wallet
+          </span>
+        </a>
+      </li>
+
+      <hr class="sidebar-divider my-0">
+      <!-- Nav Item   -->
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="pageSwitcher('wallets')">
+          <span>Wallets</span></a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="pageSwitcher('transactions')">
+          <span>Transactions</span></a>
+      </li>
+      <li class="nav-item ">
+        <a class="nav-link" href="#" onclick="pageSwitcher('send-payment')">
+          <span>Send Payment</span></a>
+      </li>
+
+      <!-- Web Socket connection status -->
+
+    <!-- Connected Block -->
+      <li class="nav-item bottom-box">
+        <div class="container px-1 py-3" id="connected">
+          <div class="row align-items-center ">
+            <div class="col-3">
+              <svg class="text-success" width="38px" height="38px" viewBox="0 0 16 16" class="bi bi-check-circle"
+                fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                <path fill-rule="evenodd"
+                  d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.236.236 0 0 1 .02-.022z" />
+              </svg>
+            </div>
+            <div class="col-9">
+              <span class="text-secondary network"> Network Status</span><br />
+              <span class="text-success  font-weight-bold connected"> Connected</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12">
+              <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" id="syncProgress" role="progressbar"
+                  style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                  Syncing Your Wallet
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connecting Block -->
+        <div class="container px-1 py-3" id="connecting">
+          <div class="row align-items-center ">
+            <div class="col-3">
+              <svg class="text-warning rotate-anim" width="38px" height="38px" viewBox="0 0 16 16"
+                class="bi bi-arrow-repeat" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z" />
+                <path fill-rule="evenodd"
+                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z" />
+              </svg>
+            </div>
+            <div class="col-9">
+              <span class="text-secondary network"> Network Status</span><br />
+              <span class="text-warning  font-weight-bold connected"> Connecting</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Not Connected Block -->
+        <div class="container px-1 py-3" id="not-connected">
+          <div class="row align-items-center ">
+            <div class="col-3">
+              <svg class="text-danger" width="38px" height="38px" viewBox="0 0 17 16" class="bi bi-exclamation-triangle" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M7.938 2.016a.146.146 0 0 0-.054.057L1.027 13.74a.176.176 0 0 0-.002.183c.016.03.037.05.054.06.015.01.034.017.066.017h13.713a.12.12 0 0 0 .066-.017.163.163 0 0 0 .055-.06.176.176 0 0 0-.003-.183L8.12 2.073a.146.146 0 0 0-.054-.057A.13.13 0 0 0 8.002 2a.13.13 0 0 0-.064.016zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/>
+                <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995z"/>
+              </svg>
+            </div>
+            <div class="col-9">
+              <span class="text-secondary network"> Network Status</span><br />
+              <span class="text-danger  font-weight-bold connected"> Not Connected</span>
+            </div>
+          </div>
+        </div>
+      </li>
+
+    </ul>
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+
+      <!-- Topbar -->
+      <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+      </nav>
+      <!-- End of Topbar -->
+      <!-- Main Content -->
+      <div class="loading-overlay">
+        <h1>loading-overlay</h1>
+      </div>
+      <div id="content">
+        <!-- Wallets Section -->
+        <section id="wallets" class="shadow">
+          <div class="header">
+            <h1>Wallets</h1>
+            <a href="#" id="walletsview-table-btn" class="walletpage-view btn btn-info hide-div">View Wallets</a>
+            <a href="#" id="walletsview-import-btn" class="walletpage-view btn btn-info">Import</a>
+            <a href="#" disabled id="walletsview-export-btn" class="walletpage-view btn btn-success">Export</a>
+          </div>
+          <div id="walletsview-table" class="show-div">
+            <table id="wallets-table" class="display responsive">
+              <thead>
+                <tr>
+                  <th>Wallet ID</th>
+                  <th>Public Key</th>
+                  <th>Balance</th>
+                  <th># of Transactions</th>
+                  <th>Wallet Creation Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div id="walletsview-import" class="hide-div">
+            <h4>Import Wallets</h4>
+
+            <form id="import-wallets">
+              <textarea class="form-control" name="walletsJson" id="wallets-json" cols="30" rows="10"></textarea>
+              <input type="submit" class=" btn-submit btn btn-info" value="Execute Import">
+            </form>
+          </div>
+          <div id="walletsview-export" class="hide-div">
+            <h4>Export Wallets</h4>
+            <pre>
+              <code class="" name="walletsJsonExport" id="wallets-json-export" >
+              </code>
+            </pre>
+            <!-- <textarea class="form-control" cols="30" rows="10"></textarea> -->
+          </div>
+        </section>
+        <!-- End Wallets Section -->
+
+        <!-- Transaction History Section -->
+        <section id="transactions" class="shadow">
+          <h1>Transaction History</h1>
+          <select class="wallets-dropdown" id="transaction-wallet">
+            <option hidden default> Select a Wallet</option>
+          </select>
+
+          <table id="transactions-table" class="display responsive">
+            <thead>
+              <tr>
+                <th>Hash</th>
+                <th>Amount</th>
+                <th>Fee</th>
+                <th>Block</th>
+                <th># of Confirmations</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+          </table>
+        </section>
+        <!-- End Transaction History Section -->
+
+        <!-- Send Payment Section -->
+        <section id="send-payment" class="shadow">
+          <h1>Send Payment</h1>
+          <div class="header">
+            <label for="sendpayment-wallet">Wallet</label>
+            <select id="sendpayment-wallet">
+              <option hidden default> Select a Wallet</option>
+            </select>
+            <span>
+              <p>Balance: </p>
+              <p id="send-balance"></p>
+            </span>
+          </div>
+
+          <form id="sendTransaction">
+            <div>
+              <label for="recipient">Recipient Address</label>
+              <input type="text" name="recipient">
+            </div>
+            <div>
+              <label for="amount">Amount</label>
+              <input type="text" name="amount">
+            </div>
+            <div>
+              <label for="priority">Priority</label>
+              <select name="priority" id="priority">
+                <option value="0" default>Default (x4)</option>
+                <option value="1">Unimportant (x1)</option>
+                <option value="2">Normal</option>
+                <option value="3">Elevated</option>
+                <option value="4">Priority</option>
+              </select>
+            </div>
+
+            <input type="submit" value="Send Monero">
+          </form>
+        </section>
+        <!-- End Send Payment Section -->
+
+      </div>
+      <!-- End of Main Content -->
+
+      <!-- Footer -->
+      <footer class="sticky-footer bg-white">
+        <div class="container my-auto">
+          <div class="copyright text-center my-auto">
+            <span>Copyright &copy; Open Text 2020</span>
+          </div>
+        </div>
+      </footer>
+      <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+  </div>
+
+
+  <!-- Bootstrap core JavaScript-->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+  <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="monero.ui.js"></script>
+
+</body>
+
+</html>

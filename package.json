@@ -1,0 +1,16 @@
+{
+  "name": "monero",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "json-stringify-safe": "^5.0.1",
+    "monero-javascript": "^0.4.3",
+    "ws": "^7.3.1"
+  }
+}
